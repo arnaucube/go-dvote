@@ -1,10 +1,9 @@
 package data
 
 import (
-	"testing"
-	"fmt"
 	"encoding/json"
 	"strings"
+	"testing"
 )
 
 func TestPublishAndRetrieve(t *testing.T) {
@@ -28,7 +27,7 @@ func TestPublishAndRetrieve(t *testing.T) {
 	postpub := string(content)
 	//fmt.Println(hash)
 	//fmt.Println(string(content))
-	if strings.Compare(prepub,postpub) != 0 {
+	if strings.Compare(prepub, postpub) != 0 {
 		t.Errorf("Published file doesn't match. Expected:\n %s \n Got: \n %s \n", prepub, postpub)
 	}
 }

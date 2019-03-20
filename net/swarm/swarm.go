@@ -137,6 +137,7 @@ type SimplePss struct {
 	PssTopics  map[string]*pssSub
 	Hive       *network.Hive
 	Ports      *swarmPorts
+	LogLevel   string
 }
 
 func (sn *SimplePss) SetLog(level string) error {
@@ -162,7 +163,7 @@ func (sn *SimplePss) PrintStats() {
 				var addrs [][]byte
 				addrs = append(addrs, []byte(addr))
 				peerCount := sn.Node.Server().PeerCount()
-				log.Info(fmt.Sprintf("PeerCount:%d NeighDepth:%d", peerCount, sn.Hive.NeighbourhoodDepth))
+				log.Info(fmt.Sprintf("PeerCount:%d NeighDepth:%d", peerCount, sn.Hive.NeighbourhoodDepth()))
 			}
 			time.Sleep(time.Second * 5)
 		}
@@ -188,8 +189,12 @@ func (sn *SimplePss) Init() error {
 		os.MkdirAll(sn.Datadir, 0755)
 	}
 
-	sn.SetLog("info")
-	sn.Ports = NewSwarmPorts()
+	sn.SetLog(sn.LogLevel)
+
+	// if sn.Ports are not defined, set the default config
+	if (sn.Ports.WebSockets == 0) && (sn.Ports.HTTPRPC == 0) && (sn.Ports.Bzz == 0) && (sn.Ports.P2P == 0) {
+		sn.Ports = NewSwarmPorts()
+	}
 
 	// create node
 	sn.Node, sn.NodeConfig, err = newNode(sn.Key, sn.Ports.P2P,
@@ -210,10 +215,16 @@ func (sn *SimplePss) Init() error {
 	}
 
 	// start the node
-	sn.Node.Start()
+	err = sn.Node.Start()
+	if err != nil {
+		return err
+	}
 	for _, url := range SwarmBootnodes {
 		log.Info("Add bootnode " + url)
-		node, _ := enode.ParseV4(url)
+		node, err := enode.ParseV4(url)
+		if err != nil {
+			return err
+		}
 		sn.Node.Server().AddPeer(node)
 	}
 
